@@ -7,7 +7,7 @@ import Synchronization
 
 //--------------------------------------------------------------------------------------------------
 
-public nonisolated struct BinarySerialFormat <SEND_CODE : BinarySendCodeProtocol,
+public struct BinarySerialFormat <SEND_CODE : BinarySendCodeProtocol,
                                   RECEIVE_CODE : BinaryReceiveCodeProtocol> {
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -17,7 +17,7 @@ public nonisolated struct BinarySerialFormat <SEND_CODE : BinarySendCodeProtocol
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  public nonisolated mutating func removeAllReceivedDatas () {
+  public mutating func removeAllReceivedDatas () {
     self.mReceiverManager = ReceiverManager <RECEIVE_CODE> ()
   }
 
@@ -25,7 +25,7 @@ public nonisolated struct BinarySerialFormat <SEND_CODE : BinarySendCodeProtocol
   //MARK: Send
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  public nonisolated func data (forCommand inCommand : SEND_CODE) -> Data {
+  public func data (forCommand inCommand : SEND_CODE) -> Data {
     var byte = inCommand.rawValue | 0xC0
     let data = unsafe Data (bytes: &byte, count: 1)
     return data
@@ -33,7 +33,7 @@ public nonisolated struct BinarySerialFormat <SEND_CODE : BinarySendCodeProtocol
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  public nonisolated func data (forEncodedU64 inValue : UInt64) -> Data {
+  public func data (forEncodedU64 inValue : UInt64) -> Data {
     var data = Data ()
     data.append (UInt8 ((inValue & 0x0F) | 0x80))
     var v = inValue >> 4
@@ -46,7 +46,7 @@ public nonisolated struct BinarySerialFormat <SEND_CODE : BinarySendCodeProtocol
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  public nonisolated func data (forEncodedString inValue : String) -> Data {
+  public func data (forEncodedString inValue : String) -> Data {
     var data = Data ()
     data.append (0xA0)
     for utf32 in inValue.unicodeScalars {
@@ -81,8 +81,8 @@ public nonisolated struct BinarySerialFormat <SEND_CODE : BinarySendCodeProtocol
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  nonisolated public mutating func handleReceivedData (_ inData : Data,
-                                                       _ outCommands : inout [Command <RECEIVE_CODE>]) {
+  public mutating func handleReceivedData (_ inData : Data,
+                                           _ outCommands : inout [Command <RECEIVE_CODE>]) {
     outCommands.removeAll ()
     for byte in inData {
       self.mReceiverManager.handleReceivedByte (byte, &outCommands)
