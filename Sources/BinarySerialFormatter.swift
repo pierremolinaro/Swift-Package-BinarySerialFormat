@@ -46,7 +46,7 @@ public struct BinarySerialFormatter {
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  public func data (forString inValue : String) -> Data {
+  public static func data (forString inValue : String) -> Data {
     var data = Data ()
     data.append (0xA0)
     for utf32 in inValue.unicodeScalars {
