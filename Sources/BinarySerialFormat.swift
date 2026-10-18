@@ -8,7 +8,7 @@ import Synchronization
 //--------------------------------------------------------------------------------------------------
 
 public struct BinarySerialFormat <SEND_CODE : BinarySendCodeProtocol,
-                                  RECEIVE_CODE : BinaryReceiveCodeProtocol> {
+                                  RECEIVE_CODE : BinaryReceiveCodeProtocol> : Sendable {
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
