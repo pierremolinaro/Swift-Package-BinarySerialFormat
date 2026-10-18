@@ -6,9 +6,9 @@ import Foundation
 
 //--------------------------------------------------------------------------------------------------
 
-nonisolated public struct Command <RECEIVE_CODE : BinaryReceiveCodeProtocol> : Sendable {
+nonisolated public struct BinarySerialCommand <RECEIVE_CODE : BinaryReceiveCodeProtocol> : Sendable {
   public let code : RECEIVE_CODE
-  public let parameters : [Parameter]
+  public let parameters : [BinarySerialParameter]
 }
 
 //--------------------------------------------------------------------------------------------------

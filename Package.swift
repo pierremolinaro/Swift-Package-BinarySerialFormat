@@ -14,6 +14,10 @@ let package = Package (
   ],
   targets: [
     .target (name: "BinarySerialFormat"),
+    .testTarget (
+      name: "TestF32",
+      dependencies: ["BinarySerialFormat"],
+    ),
   ]
 )
 
