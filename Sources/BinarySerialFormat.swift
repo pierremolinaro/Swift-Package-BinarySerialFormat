@@ -7,9 +7,9 @@ import Synchronization
 
 //--------------------------------------------------------------------------------------------------
 
-public struct BinarySerialFormat <
+public class BinarySerialFormat <
              SEND_CODE : BinarySendCodeProtocol,
-             RECEIVE_CODE : BinaryReceiveCodeProtocol> : ~Copyable {
+             RECEIVE_CODE : BinaryReceiveCodeProtocol> {
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -24,13 +24,13 @@ public struct BinarySerialFormat <
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  public mutating func setReceiveCallBack (_ inCompletionCallBack : Optional < (_ inCommand : Command <RECEIVE_CODE>) -> Void >) {
+  public func setReceiveCallBack (_ inCompletionCallBack : Optional < (_ inCommand : Command <RECEIVE_CODE>) -> Void >) {
     self.mReceiveCallBack = inCompletionCallBack
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  public mutating func setSendCallBack (_ inSendCallBack : Optional < (_ inData : Data) -> Void >) {
+  public func setSendCallBack (_ inSendCallBack : Optional < (_ inData : Data) -> Void >) {
     self.mSendCallBack = inSendCallBack
   }
 
