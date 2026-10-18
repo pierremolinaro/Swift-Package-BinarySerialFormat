@@ -19,6 +19,11 @@ public struct BinarySerialFormat <
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+  public init () {
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
   public mutating func setReceiveCallBack (_ inCompletionCallBack : Optional < (_ inCommand : Command <RECEIVE_CODE>) -> Void >) {
     self.mReceiveCallBack = inCompletionCallBack
   }
