@@ -7,15 +7,8 @@ import Synchronization
 
 //--------------------------------------------------------------------------------------------------
 
-public class BinarySerialFormat <
-             SEND_CODE : BinarySendCodeProtocol,
-             RECEIVE_CODE : BinaryReceiveCodeProtocol> {
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  private var mReceiveCallBack : Optional < (_ inCommand : Command <RECEIVE_CODE>) -> Void > = nil
-  private var mSendCallBack : Optional < (_ inData : Data) -> Void > = nil
-  private let mReceiverManager = Mutex <ReceiverManager <RECEIVE_CODE>> (ReceiverManager ())
+public struct BinarySerialFormat <SEND_CODE : BinarySendCodeProtocol,
+                                  RECEIVE_CODE : BinaryReceiveCodeProtocol> {
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -24,41 +17,23 @@ public class BinarySerialFormat <
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  public func setReceiveCallBack (_ inCompletionCallBack : Optional < (_ inCommand : Command <RECEIVE_CODE>) -> Void >) {
-    self.mReceiveCallBack = inCompletionCallBack
-  }
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  public func setSendCallBack (_ inSendCallBack : Optional < (_ inData : Data) -> Void >) {
-    self.mSendCallBack = inSendCallBack
-  }
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  public nonisolated func removeAllReceivedDatas () {
-    self.mReceiverManager.withLock { $0 = ReceiverManager () }
-  }
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  private nonisolated func sendData (_ inData : Data) {
-    self.mSendCallBack? (inData)
+  public nonisolated mutating func removeAllReceivedDatas () {
+    self.mReceiverManager = ReceiverManager <RECEIVE_CODE> ()
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   //MARK: Send
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  public nonisolated func send (command inCommand : SEND_CODE) {
+  public nonisolated func data (forCommand inCommand : SEND_CODE) -> Data {
     var byte = inCommand.rawValue | 0xC0
     let data = unsafe Data (bytes: &byte, count: 1)
-    self.sendData (data)
+    return data
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  public nonisolated func send (encodedU64 inValue : UInt64) {
+  public nonisolated func data (forEncodedU64 inValue : UInt64) -> Data {
     var data = Data ()
     data.append (UInt8 ((inValue & 0x0F) | 0x80))
     var v = inValue >> 4
@@ -66,12 +41,12 @@ public class BinarySerialFormat <
       data.append (UInt8 (v & 0x7F))
       v >>= 7
     }
-    self.sendData (data)
+    return data
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  public nonisolated func send (encodedString inValue : String) {
+  public nonisolated func data (forEncodedString inValue : String) -> Data {
     var data = Data ()
     data.append (0xA0)
     for utf32 in inValue.unicodeScalars {
@@ -95,56 +70,27 @@ public class BinarySerialFormat <
         data.append (UInt8 (pointCode >> 16) | 0x40)
       }
     }
-    self.sendData (data)
+    return data
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   //MARK: Receive
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  nonisolated public func handleReceivedData (_ inData : Data) {
+  private var mReceiverManager = ReceiverManager <RECEIVE_CODE> ()
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  nonisolated public mutating func handleReceivedData (_ inData : Data,
+                                                       _ outCommands : inout [Command <RECEIVE_CODE>]) {
+    outCommands.removeAll ()
     for byte in inData {
-      self.mReceiverManager.withLock { $0.handleReceivedByte (byte) }
-    }
-    self.mReceiverManager.withLock {
-      while !$0.mCommands.isEmpty {
-        let command = $0.mCommands.removeFirst ()
-        self.mReceiveCallBack? (command)
-      }
+      self.mReceiverManager.handleReceivedByte (byte, &outCommands)
     }
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-}
-
-//--------------------------------------------------------------------------------------------------
-
-nonisolated public enum Parameter : Sendable {
-  case u64 (UInt64)
-  case s64 (Int64)
-  case str (String)
-
-  public var u64 : UInt64? {
-    switch self {
-    case .u64 (let v): return v
-    case .s64, .str: return nil
-    }
-  }
-
-  public var s64 : Int64? {
-    switch self {
-    case .s64 (let v): return v
-    case .u64, .str: return nil
-    }
-  }
-
-  public var str : String? {
-    switch self {
-    case .str (let v): return v
-    case .u64, .s64: return nil
-    }
-  }
 }
 
 //--------------------------------------------------------------------------------------------------

@@ -15,7 +15,6 @@ nonisolated struct ReceiverManager <RECEIVE_CODE : BinaryReceiveCodeProtocol> {
   var mDecodingU64Shift : UInt64 = 0
   var mDecodingString = Data ()
   var mParameterStack = [Parameter] ()
-  var mCommands = [Command <RECEIVE_CODE>] ()
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -107,7 +106,8 @@ nonisolated struct ReceiverManager <RECEIVE_CODE : BinaryReceiveCodeProtocol> {
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  mutating func handleReceivedByte (_ inByte : UInt8) {
+  mutating func handleReceivedByte (_ inByte : UInt8,
+                                    _ outCommands : inout [Command <RECEIVE_CODE>]) {
     let f : ByteFormat = Self.formatForByte (inByte)
     switch f {
     case .parameterExtension :
@@ -143,7 +143,7 @@ nonisolated struct ReceiverManager <RECEIVE_CODE : BinaryReceiveCodeProtocol> {
       self.closeCurrentValueDecoding ()
       if let receiveCode = RECEIVE_CODE (rawValue: inByte & 0x3F) {
         let command = Command (code: receiveCode, parameters: self.mParameterStack)
-        self.mCommands.append (command)
+        outCommands.append (command)
       }
       self.mParameterStack.removeAll ()
     case .undefined :
