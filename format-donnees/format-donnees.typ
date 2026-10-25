@@ -375,13 +375,16 @@ Il en est de même pour +0 qui est codé par $bold(1) space bold(0) space bold(1
 
 L'encodage des valeurs flottantes 32 bits peut être réalisé par la fonction C++ suivante :
 ```Cpp
-void encodeF32 (std::vector <uint8_t> & ioBuffer,
-                const float inValue) {
-  ioBuffer.push_back (uint8_t ((inValue & 0x0F) | 0x80)) ;
-  uint32_t v = inValue >> 4 ;
-  while (v > 0) {
-    ioBuffer.push_back (uint8_t (v & 0x7F)) ;
-    v >>= 7 ;
+void sendEncodedFloat (const float inValue) {
+  union { float f32 ; uint32_t u32 ; } x ;
+  x.f32 = inValue ;
+  gSendBuffer [gSendBufferIndex] = uint8_t ((x.u32 >> 28) | 0xB0) ;
+  gSendBufferIndex += 1 ;
+  x.u32 <<= 4 ;
+  while (x.u32 > 0) {
+    gSendBuffer [gSendBufferIndex] = uint8_t (x.u32 >> 25) ;
+    gSendBufferIndex += 1 ;
+    x.u32 <<= 7 ;
   }
 }
 ```
